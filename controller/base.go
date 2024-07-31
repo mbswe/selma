@@ -7,7 +7,7 @@ import (
 // ControllerBase provides common functionalities for all controllers
 type ControllerBase struct{}
 
-// NewControllerBase creates a new ControllerBase instance
+// NewControllerBase creates a new BaseController instance
 func NewControllerBase() *ControllerBase {
 	return &ControllerBase{}
 }
