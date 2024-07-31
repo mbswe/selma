@@ -1,7 +1,10 @@
 package selma
 
 import (
+	"database/sql"
 	"encoding/json"
+	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 	"io"
 	"log"
 	"os"
@@ -18,11 +21,21 @@ type LoggingConfig struct {
 	Info       string `json:"info"`
 }
 
+// DatabaseConfig holds the database configuration
+type DatabaseConfig struct {
+	Host     string `json:"host"`
+	Port     int    `json:"port"`
+	Username string `json:"username"`
+	Password string `json:"password"`
+	Database string `json:"database"`
+}
+
 // Config holds the server configuration
 type Config struct {
-	Mode       string        `json:"mode"`
-	ServerPort int           `json:"server_port"`
-	Logging    LoggingConfig `json:"logging"`
+	Mode       string         `json:"mode"`
+	ServerPort int            `json:"server_port"`
+	Logging    LoggingConfig  `json:"logging"`
+	Database   DatabaseConfig `json:"database"`
 }
 
 // App houses the router and configuration
@@ -32,6 +45,7 @@ type App struct {
 	MiddlewareLogger *log.Logger
 	DebugLogger      *log.Logger
 	ViewRenderer     *ViewRenderer
+	DB               *sql.DB
 }
 
 // NewApp initializes the App with the configuration and router
@@ -59,7 +73,9 @@ func NewApp(configPath string) *App {
 		Router: router,
 		Config: config,
 	}
+
 	app.setupLogging()
+	app.initDatabase()
 
 	viewRenderer := NewViewRenderer(config, app.DebugLogger)
 	if err := viewRenderer.LoadTemplates("views"); err != nil {
@@ -97,6 +113,24 @@ func (app *App) setupLogging() {
 	}
 	multiWriter := io.MultiWriter(systemLogFile, os.Stdout)
 	log.SetOutput(multiWriter)
+}
+
+// initDatabase initializes the database connection
+func (app *App) initDatabase() {
+	dbConfig := app.Config.Database
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
+		dbConfig.Username, dbConfig.Password, dbConfig.Host, dbConfig.Port, dbConfig.Database)
+
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		log.Fatalf("Failed to connect to database: %v", err)
+	}
+
+	if err := db.Ping(); err != nil {
+		log.Fatalf("Failed to ping database: %v", err)
+	}
+
+	app.DB = db
 }
 
 // StartServer starts the HTTP server using the configuration
