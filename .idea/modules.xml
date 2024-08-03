@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project version="4">
-  <component name="ProjectModuleManager">
-    <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/Selma.iml" filepath="$PROJECT_DIR$/.idea/Selma.iml" />
-      <module fileurl="file://$PROJECT_DIR$/../SelmaApp/.idea/SelmaApp.iml" filepath="$PROJECT_DIR$/../SelmaApp/.idea/SelmaApp.iml" />
-    </modules>
-  </component>
-</project>
