@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/mbswe/selma/migrate"
 	"io"
 	"log"
 	"os"
@@ -131,6 +132,18 @@ func (app *App) initDatabase() {
 	}
 
 	app.DB = db
+}
+
+// RunMigrations runs database migrations
+func (app *App) RunMigrations() {
+	migrations, err := migrate.LoadMigrations("migrations")
+	if err != nil {
+		log.Fatalf("Failed to load migrations: %v", err)
+	}
+
+	if err := migrate.RunMigrations(app.DB, migrations); err != nil {
+		log.Fatalf("Failed to run migrations: %v", err)
+	}
 }
 
 // StartServer starts the HTTP server using the configuration
