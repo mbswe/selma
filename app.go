@@ -1,11 +1,11 @@
 package selma
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
-	"github.com/mbswe/selma/migrate"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 	"io"
 	"log"
 	"os"
@@ -46,7 +46,7 @@ type App struct {
 	MiddlewareLogger *log.Logger
 	DebugLogger      *log.Logger
 	ViewRenderer     *ViewRenderer
-	DB               *sql.DB
+	DB               *gorm.DB
 }
 
 // NewApp initializes the App with the configuration and router
@@ -119,29 +119,20 @@ func (app *App) setupLogging() {
 // initDatabase initializes the database connection
 func (app *App) initDatabase() {
 	dbConfig := app.Config.Database
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		dbConfig.Username, dbConfig.Password, dbConfig.Host, dbConfig.Port, dbConfig.Database)
 
-	db, err := sql.Open("mysql", dsn)
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		log.Fatalf("Failed to connect to database: %v", err)
-	}
-
-	if err := db.Ping(); err != nil {
-		log.Fatalf("Failed to ping database: %v", err)
 	}
 
 	app.DB = db
 }
 
-// RunMigrations runs database migrations
-func (app *App) RunMigrations() {
-	migrations, err := migrate.LoadMigrations("migrations")
-	if err != nil {
-		log.Fatalf("Failed to load migrations: %v", err)
-	}
-
-	if err := migrate.RunMigrations(app.DB, migrations); err != nil {
+// RunMigrations runs database migrations using GORM
+func (app *App) RunMigrations(models ...interface{}) {
+	if err := app.DB.AutoMigrate(models...); err != nil {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
 }
