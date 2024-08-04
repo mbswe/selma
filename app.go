@@ -3,11 +3,12 @@ package selma
 import (
 	"encoding/json"
 	"fmt"
-	_ "github.com/go-sql-driver/mysql"
+	"github.com/gorilla/mux"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"io"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -41,7 +42,7 @@ type Config struct {
 
 // App houses the router and configuration
 type App struct {
-	Router           *Router
+	Router           *mux.Router
 	Config           *Config
 	MiddlewareLogger *log.Logger
 	DebugLogger      *log.Logger
@@ -68,7 +69,7 @@ func NewApp(configPath string) *App {
 		log.Fatalf("Failed to parse config file: %v", err)
 	}
 
-	router := NewRouter()
+	router := mux.NewRouter()
 
 	app := &App{
 		Router: router,
@@ -140,10 +141,8 @@ func (app *App) RunMigrations(models ...interface{}) {
 // StartServer starts the HTTP server using the configuration
 func (app *App) StartServer() {
 	addr := ":" + strconv.Itoa(app.Config.ServerPort)
-	server := &Server{
-		Addr:   addr,
-		Router: app.Router,
-		Config: app.Config,
-	}
-	server.ListenAndServe()
+
+	log.Printf("Server listening on %s", addr)
+
+	http.ListenAndServe(addr, app.Router)
 }
