@@ -144,5 +144,8 @@ func (app *App) StartServer() {
 
 	log.Printf("Server listening on %s", addr)
 
-	http.ListenAndServe(addr, app.Router)
+	err := http.ListenAndServe(addr, app.Router)
+	if err != nil {
+		return
+	}
 }
